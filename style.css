@@ -71,8 +71,10 @@ aside#sidebar {
 
 .risk-selector-item.active {
   background: #eaf1ff;
-  font-weight: bold;
+  font-weight: 700;
+  outline: 2px solid #2D7DFE20;
 }
+
 
 .dot {
   height: 10px;
@@ -179,11 +181,55 @@ button:disabled {
   }
 
   #risk-selector {
-    display: none;
-    margin-top: 1em;
+    max-height: calc(100vh - 240px);
+    overflow: auto;
   }
 
   #risk-selector.open {
     display: block;
   }
+}
+/* Status group */
+.status-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 14px 0 8px;
+}
+
+.status-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 2px solid #e6eefc;
+  background: #f7fbff;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .02s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.status-btn:active { transform: scale(0.99); }
+.status-btn .emoji { font-size: 1.1rem; }
+
+/* Selected state */
+.status-btn.selected {
+  border-color: #2D7DFE;
+  background: #e9f1ff;
+  box-shadow: 0 0 0 3px rgba(45,125,254,.15);
+}
+
+/* Color hints (same button; just icons/colors imply meaning) */
+.status-implemented { background: #eaffef; border-color: #baf0ca; }
+.status-implemented.selected { background: #dcffe7; border-color: #2bbf6a; }
+.status-planned { background: #eef6ff; border-color: #cfe3ff; }
+.status-planned.selected { background: #e3f0ff; border-color: #2D7DFE; }
+.status-notplanned { background: #fff0f0; border-color: #ffd4d4; }
+.status-notplanned.selected { background: #ffe7e7; border-color: #e53935; }
+.status-discuss { background: #fff7e8; border-color: #ffe1ad; }
+.status-discuss.selected { background: #fff2d8; border-color: #ff9f1c; }
+
+@media (max-width: 520px) {
+  .status-group { grid-template-columns: 1fr; }
 }
