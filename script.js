@@ -14,17 +14,21 @@ let finishedConfirmed = false;
 function updateRiskSelector() {
   const container = document.getElementById("risk-selector");
   container.innerHTML = "";
+
   risks.forEach((risk, index) => {
     const filled = feedbackCache[risk.title]?.trim().length > 0;
     const dotColor = filled ? "green" : "red";
+
     const item = document.createElement("div");
-    item.className = "risk-selector-item";
+    item.className = "risk-selector-item" + (index === currentIndex ? " active" : "");
     item.innerHTML = `<span class="dot" style="background:${dotColor}"></span>${risk.title}`;
+
     item.onclick = () => {
       saveCurrentFeedback();
       currentIndex = index;
       renderRisk(currentIndex);
     };
+
     container.appendChild(item);
   });
 }
@@ -73,7 +77,7 @@ function renderRisk(index) {
   updateProgress();
 }
 
-// Navigation
+// Setup navigation buttons
 document.getElementById("prev-btn").onclick = () => {
   saveCurrentFeedback();
   if (currentIndex > 0) {
@@ -107,8 +111,8 @@ document.getElementById("submit-btn").onclick = async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": "...",
-      "Authorization": "...",
+      "apikey": "YOUR_SUPABASE_ANON_KEY",
+      "Authorization": "Bearer YOUR_SUPABASE_ANON_KEY",
       "Prefer": "return=minimal"
     },
     body: JSON.stringify(allEntries)
@@ -122,6 +126,15 @@ document.getElementById("submit-btn").onclick = async () => {
   }
 };
 
-// Init
+// Setup sidebar toggle for mobile
+const sidebarToggle = document.getElementById("toggleSidebar");
+if (sidebarToggle) {
+  sidebarToggle.addEventListener("click", () => {
+    const selector = document.getElementById("risk-selector");
+    selector.classList.toggle("open");
+  });
+}
+
+// Initialize UI
 renderRisk(currentIndex);
 document.getElementById("feedback").addEventListener("keyup", saveCurrentFeedback);

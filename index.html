@@ -34,11 +34,31 @@
       margin: 0;
     }
 
-    #risk-selector {
-      position: absolute;
-      top: 1em;
-      left: 1em;
+    main {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2em;
+      padding: 2em;
+    }
+
+    aside#sidebar {
+      flex-shrink: 0;
       width: 220px;
+      position: relative;
+    }
+
+    #toggleSidebar {
+      display: none;
+      background-color: #2D7DFE;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    #risk-selector {
       background: #fff;
       border-radius: 8px;
       padding: 1em;
@@ -79,9 +99,11 @@
     }
 
     #risk-container {
+      flex: 1;
+      min-width: 300px;
       padding: 20px;
       max-width: 600px;
-      margin: 40px auto 0 auto;
+      margin: 0 auto;
       color: black;
       background-color: #ffffff;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -148,6 +170,25 @@
       width: 0%;
       transition: width 0.3s ease-in-out;
     }
+
+    @media (max-width: 768px) {
+      main {
+        flex-direction: column;
+      }
+
+      #toggleSidebar {
+        display: block;
+      }
+
+      #risk-selector {
+        display: none;
+      }
+
+      #risk-selector.open {
+        display: block;
+        margin-bottom: 1em;
+      }
+    }
   </style>
 </head>
 <body>
@@ -157,12 +198,12 @@
   </header>
 
   <main>
-    <!-- Left risk list selector -->
-    <div id="risk-selector"></div>
+    <aside id="sidebar">
+      <button id="toggleSidebar">☰ Risks</button>
+      <div id="risk-selector"></div>
+    </aside>
 
-    <!-- Central feedback form card -->
     <div id="risk-container">
-      <!-- Progress bar section -->
       <div id="progress-bar-container">
         <div class="progress-label">
           <span id="progress-text">Progress: Loading...</span>
@@ -189,6 +230,11 @@
     </div>
   </main>
 
+  <script>
+    document.getElementById('toggleSidebar').addEventListener('click', function () {
+      document.getElementById('risk-selector').classList.toggle('open');
+    });
+  </script>
   <script src="script.js"></script>
 </body>
 </html>
