@@ -143,11 +143,21 @@ document.getElementById("submit-btn").onclick = async () => {
   });
 
   if (response.ok) {
-    alert("✅ All feedback submitted successfully!");
+    document.querySelector("main").style.display = "none";
+    document.getElementById("thank-you-screen").style.display = "block";
+  
+    const summaryDiv = document.getElementById("response-summary");
+    summaryDiv.innerHTML = risks.map(risk => `
+      <div style="margin-bottom: 1.5em;">
+        <strong>${risk.title}</strong><br />
+        <em>${feedbackCache[risk.title]}</em>
+      </div>
+    `).join("");
   } else {
     alert("❌ Error submitting feedback.");
     console.error(await response.text());
   }
+  
 };
 
 // Setup sidebar toggle for mobile
