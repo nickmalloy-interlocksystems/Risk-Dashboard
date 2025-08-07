@@ -162,3 +162,12 @@ if (sidebarToggle) {
 // Initialize UI
 renderRisk(currentIndex);
 document.getElementById("feedback").addEventListener("keyup", saveCurrentFeedback);
+
+// Sidebar toggle logic for mobile
+const sidebar = document.getElementById("risk-sidebar");
+const toggleButton = document.getElementById("toggle-sidebar");
+
+toggleButton.onclick = () => {
+  sidebar.classList.toggle("closed");
+  sidebar.classList.toggle("open");
+};

@@ -26,12 +26,14 @@ main {
   justify-content: center;
 }
 
+/* Sidebar wrapper */
 aside#sidebar {
   flex-shrink: 0;
   width: 220px;
   position: relative;
 }
 
+/* Toggle button */
 #toggleSidebar {
   display: none;
   background-color: #2D7DFE;
@@ -43,6 +45,7 @@ aside#sidebar {
   margin-bottom: 10px;
 }
 
+/* Risk selector block */
 #risk-selector {
   background: #fff;
   border-radius: 8px;
@@ -84,6 +87,7 @@ aside#sidebar {
   background-color: green;
 }
 
+/* Risk card */
 #risk-container {
   flex: 1;
   min-width: 300px;
@@ -130,6 +134,7 @@ button:disabled {
   text-align: center;
 }
 
+/* Progress bar */
 #progress-bar-container {
   margin-bottom: 20px;
 }
@@ -157,20 +162,25 @@ button:disabled {
   transition: width 0.3s ease-in-out;
 }
 
-/* Collapsible behavior for mobile */
+/* 🔻 Mobile styles */
 @media (max-width: 768px) {
   main {
     flex-direction: column;
     padding: 1em;
   }
 
+  aside#sidebar {
+    width: 100%;
+  }
+
   #toggleSidebar {
     display: block;
+    width: 100%;
   }
 
   #risk-selector {
     display: none;
-    margin-bottom: 1em;
+    margin-top: 1em;
   }
 
   #risk-selector.open {
