@@ -33,6 +33,7 @@ const risks = [
 ];
 
 let currentIndex = 0;
+let feedbackCache = {};
 
 function renderRisk(index) {
   document.getElementById("risk-title").textContent = risks[index].title;
