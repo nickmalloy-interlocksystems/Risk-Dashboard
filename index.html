@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Risk Feedback Form</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="logo.png" alt="Logo" class="logo" />
+      <h1>Risk Feedback Form</h1>
+      <p>Please review each identified risk and provide your feedback below.</p>
+    </div>
+
+    <form id="feedbackForm">
+      <div class="risk-card">
+        <h2>PDPL, GDPR, HIPAA non-compliance</h2>
+        <p>Data breach → fines, lawsuits; regulator classifies Nesya as unlicensed therapy.</p>
+        <textarea name="PDPL, GDPR, HIPAA non-compliance" placeholder="Your feedback..."></textarea>
+      </div>
+      <div class="risk-card">
+        <h2>AI error & crisis mis-detection</h2>
+        <p>Harmful advice, missed suicidality signals; model drift & bias against rural dialects.</p>
+        <textarea name="AI error & crisis mis-detection" placeholder="Your feedback..."></textarea>
+      </div>
+      <div class="risk-card">
+        <h2>Informed-consent gaps; privacy misuse</h2>
+        <p>Users misled about AI limits; sensitive chat logs repurposed without consent.</p>
+        <textarea name="Informed-consent gaps; privacy misuse" placeholder="Your feedback..."></textarea>
+      </div>
+      <div class="risk-card">
+        <h2>Misdiagnosis & iatrogenic harm</h2>
+        <p>Bot down-rates severe depression as “mild stress” → no referral; recommended breathing exercise triggers panic attack in PTSD user; escalation fails and self-harm occurs before human intervention.</p>
+        <textarea name="Misdiagnosis & iatrogenic harm" placeholder="Your feedback..."></textarea>
+      </div>
+      <div class="risk-card">
+        <h2>Public mistrust & over-reliance</h2>
+        <p>Media backlash after 1 bad response; youth substitute bot for real relationships.</p>
+        <textarea name="Public mistrust & over-reliance" placeholder="Your feedback..."></textarea>
+      </div>
+      <div class="risk-card">
+        <h2>High-carbon AI operations intensify users’ climate anxiety</h2>
+        <p>Large-model training and 24/7 inference racks draw megawatt-hours from coal-heavy grids → CO₂ footprint is publicised → eco-conscious users feel complicit in the very crisis they’re seeking help for.</p>
+        <textarea name="High-carbon AI operations intensify users’ climate anxiety" placeholder="Your feedback..."></textarea>
+      </div>
+
+      <button type="button" onclick="submitFeedback()">Submit Feedback</button>
+    </form>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
