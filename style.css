@@ -84,3 +84,35 @@ button:disabled {
   width: 0%;
   transition: width 0.3s ease-in-out;
 }
+#risk-selector {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  width: 220px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 1em;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  font-size: 0.9em;
+  margin-top: 135px; /* ✅ Pushes it down to align with the card */
+
+}
+.risk-selector-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5em;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 5px;
+  transition: background 0.2s;
+}
+.risk-selector-item:hover {
+  background: #f0f4fa;
+}
+.dot {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}

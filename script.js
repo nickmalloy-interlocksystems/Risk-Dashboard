@@ -1,39 +1,33 @@
 const risks = [
-  {
-    title: "Policy / Legal Risk",
-    description: "PDPL, GDPR, HIPAA non-compliance → fines, lawsuits; regulator classifies Nesya as unlicensed therapy.",
-    mitigation: "Encrypt-all + ISO 27001 audit → Locks PDPL / HIPAA compliance; deters breaches."
-  },
-  {
-    title: "Technical Risk",
-    description: "AI error & crisis mis-detection → missed suicidality signals; model drift & bias against rural dialects.",
-    mitigation: "Real-time crisis escalation → Hotline integration + 60-sec human callback SLA."
-  },
-  {
-    title: "Data Risk",
-    description: "Informed-consent gaps; chat logs reused without user understanding.",
-    mitigation: "Plain-language consent & pop-up limits → 'I'm an AI, not a therapist…'"
-  },
-  {
-    title: "Medical Risk",
-    description: "Misdiagnosis → breathing exercise triggers PTSD panic; escalation fails before human intervention.",
-    mitigation: "Clinical–Ethics Advisory Board + longitudinal outcome research."
-  },
-  {
-    title: "Societal Risk",
-    description: "Public mistrust & over-reliance → Youth substitute bot for real relationships.",
-    mitigation: "Healthy-use nudges + Transparent AI policy site."
-  },
-  {
-    title: "Environmental Risk",
-    description: "High-carbon AI ops → Publicized CO₂ footprint intensifies climate anxiety.",
-    mitigation: "Sustainability transparency (e.g. publish emissions & offset data)."
-  }
+  { title: "Policy / Legal Risk", description: "...", mitigation: "..." },
+  { title: "Technical Risk", description: "...", mitigation: "..." },
+  { title: "Data Risk", description: "...", mitigation: "..." },
+  { title: "Medical Risk", description: "...", mitigation: "..." },
+  { title: "Societal Risk", description: "...", mitigation: "..." },
+  { title: "Environmental Risk", description: "...", mitigation: "..." }
 ];
 
 let currentIndex = 0;
 let feedbackCache = {};
 let finishedConfirmed = false;
+
+function updateRiskSelector() {
+  const container = document.getElementById("risk-selector");
+  container.innerHTML = "";
+  risks.forEach((risk, index) => {
+    const filled = feedbackCache[risk.title]?.trim().length > 0;
+    const dotColor = filled ? "green" : "red";
+    const item = document.createElement("div");
+    item.className = "risk-selector-item";
+    item.innerHTML = `<span class="dot" style="background:${dotColor}"></span>${risk.title}`;
+    item.onclick = () => {
+      saveCurrentFeedback();
+      currentIndex = index;
+      renderRisk(currentIndex);
+    };
+    container.appendChild(item);
+  });
+}
 
 function updateProgress() {
   const total = risks.length;
@@ -57,6 +51,8 @@ function updateProgress() {
     finishedBtn.style.display = "none";
     submitBtn.style.display = "none";
   }
+
+  updateRiskSelector();
 }
 
 function saveCurrentFeedback() {
@@ -69,9 +65,7 @@ function renderRisk(index) {
   document.getElementById("risk-title").textContent = risks[index].title;
   document.getElementById("risk-description").textContent = risks[index].description;
   document.getElementById("mitigation-description").textContent = risks[index].mitigation;
-
-  const textarea = document.getElementById("feedback");
-  textarea.value = feedbackCache[risks[index].title] || "";
+  document.getElementById("feedback").value = feedbackCache[risks[index].title] || "";
 
   document.getElementById("prev-btn").disabled = index === 0;
   document.getElementById("next-btn").disabled = index === risks.length - 1;
@@ -79,7 +73,7 @@ function renderRisk(index) {
   updateProgress();
 }
 
-// Navigation buttons
+// Navigation
 document.getElementById("prev-btn").onclick = () => {
   saveCurrentFeedback();
   if (currentIndex > 0) {
@@ -113,8 +107,8 @@ document.getElementById("submit-btn").onclick = async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
+      "apikey": "...",
+      "Authorization": "...",
       "Prefer": "return=minimal"
     },
     body: JSON.stringify(allEntries)
@@ -128,10 +122,6 @@ document.getElementById("submit-btn").onclick = async () => {
   }
 };
 
-// Initial render
+// Init
 renderRisk(currentIndex);
-
-// Live progress update on typing
-document.getElementById("feedback").addEventListener("keyup", () => {
-  saveCurrentFeedback();
-});
+document.getElementById("feedback").addEventListener("keyup", saveCurrentFeedback);
