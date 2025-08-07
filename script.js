@@ -1,4 +1,3 @@
-
 const risks = [
   {
     title: "Policy / Legal Risk",
@@ -35,14 +34,36 @@ const risks = [
 let currentIndex = 0;
 let feedbackCache = {};
 
+function updateProgress() {
+  const total = risks.length;
+  const filled = Object.values(feedbackCache).filter(text => text && text.length > 0).length;
+  const percent = Math.round((filled / total) * 100);
+
+  document.getElementById("progress-text").textContent = `Progress: ${filled}/${total} (${percent}%)`;
+  document.getElementById("progress-fill").style.width = `${percent}%`;
+}
+
+function saveCurrentFeedback() {
+  const textarea = document.getElementById("feedback");
+  feedbackCache[risks[currentIndex].title] = textarea.value.trim();
+  updateProgress(); // ✅ trigger after saving
+}
+
 function renderRisk(index) {
   document.getElementById("risk-title").textContent = risks[index].title;
   document.getElementById("risk-description").textContent = risks[index].description;
   document.getElementById("mitigation-description").textContent = risks[index].mitigation;
-  document.getElementById("feedback").value = "";
+
+  document.getElementById("feedback").value = feedbackCache[risks[index].title] || "";
+
+  document.getElementById("prev-btn").disabled = index === 0;
+  document.getElementById("next-btn").disabled = index === risks.length - 1;
+
+  updateProgress();
 }
 
 document.getElementById("prev-btn").onclick = () => {
+  saveCurrentFeedback();
   if (currentIndex > 0) {
     currentIndex--;
     renderRisk(currentIndex);
@@ -50,6 +71,7 @@ document.getElementById("prev-btn").onclick = () => {
 };
 
 document.getElementById("next-btn").onclick = () => {
+  saveCurrentFeedback();
   if (currentIndex < risks.length - 1) {
     currentIndex++;
     renderRisk(currentIndex);
@@ -57,8 +79,13 @@ document.getElementById("next-btn").onclick = () => {
 };
 
 document.getElementById("submit-btn").onclick = async () => {
-  const feedback = document.getElementById("feedback").value.trim();
-  if (!feedback) return alert("Please enter feedback before submitting.");
+  saveCurrentFeedback();
+
+  const feedback = feedbackCache[risks[currentIndex].title];
+  if (!feedback) {
+    alert("Please enter feedback before submitting.");
+    return;
+  }
 
   const entry = {
     risk_title: risks[currentIndex].title,

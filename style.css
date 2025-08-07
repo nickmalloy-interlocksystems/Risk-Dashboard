@@ -1,37 +1,86 @@
-
 body {
   font-family: sans-serif;
   background: #f4f7fa;
   margin: 0;
   padding: 0;
+  color: black; /* Ensures all text defaults to black */
 }
+
 header {
   text-align: center;
-  background: #2D7DFE;
-  color: white;
-  padding: 1em;
+  padding: 1em 0;
+  background: none; /* Removes blue background */
+  border-bottom: none; /* Removes border if any */
 }
+
 .logo {
-  height: 50px;
+  height: 80px; /* Increased from 50px */
   margin-bottom: 0.5em;
 }
+
 main {
-  padding: 2em;
-  max-width: 600px;
-  margin: auto;
+  padding: 3em 2em;       /* More space from the top */
+  margin: 40px auto 0;     /* Adds space between header and card */
+  max-width: 500px;        /* Slightly smaller card */
   background: white;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  color: black;
 }
+
 textarea {
   width: 100%;
   height: 100px;
   margin: 1em 0;
 }
+
 button {
   margin: 0.5em;
   padding: 0.5em 1em;
+  color: white;
+  background-color: #2D7DFE; /* Same blue as logo */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
+
+button:hover {
+  background-color: #1c5ed9;
+}
+
 .nav-buttons {
   text-align: center;
+}
+
+button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+}
+
+#progress-bar-container {
+  margin-bottom: 20px;
+}
+
+.progress-label {
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  color: black;
+}
+
+.progress-track {
+  width: 100%;
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #2D7DFE;
+  width: 0%;
+  transition: width 0.3s ease-in-out;
 }
