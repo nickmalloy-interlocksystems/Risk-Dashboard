@@ -70,7 +70,8 @@ function renderRisk(index) {
   document.getElementById("risk-description").textContent = risks[index].description;
   document.getElementById("mitigation-description").textContent = risks[index].mitigation;
 
-  document.getElementById("feedback").value = feedbackCache[risks[index].title] || "";
+  const textarea = document.getElementById("feedback");
+  textarea.value = feedbackCache[risks[index].title] || "";
 
   document.getElementById("prev-btn").disabled = index === 0;
   document.getElementById("next-btn").disabled = index === risks.length - 1;
@@ -78,6 +79,7 @@ function renderRisk(index) {
   updateProgress();
 }
 
+// Navigation buttons
 document.getElementById("prev-btn").onclick = () => {
   saveCurrentFeedback();
   if (currentIndex > 0) {
@@ -111,7 +113,7 @@ document.getElementById("submit-btn").onclick = async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-"apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
+      "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
       "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
       "Prefer": "return=minimal"
     },
@@ -128,3 +130,8 @@ document.getElementById("submit-btn").onclick = async () => {
 
 // Initial render
 renderRisk(currentIndex);
+
+// Live progress update on typing
+document.getElementById("feedback").addEventListener("keyup", () => {
+  saveCurrentFeedback();
+});
