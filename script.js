@@ -12,8 +12,12 @@ async function submitFeedback() {
     const feedback_text = textarea.value.trim();
 
     if (feedback_text.length > 0) {
-      feedbacks.push({ risk_title, feedback_text });
-    }
+      feedbacks.push({
+        risk_title,
+        feedback_text,
+        timestamp: new Date().toISOString()
+      });
+          }
   });
 
   if (feedbacks.length === 0) {
