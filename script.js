@@ -33,6 +33,7 @@ const risks = [
 
 let currentIndex = 0;
 let feedbackCache = {};
+let finishedConfirmed = false;
 
 function updateProgress() {
   const total = risks.length;
@@ -41,12 +42,27 @@ function updateProgress() {
 
   document.getElementById("progress-text").textContent = `Progress: ${filled}/${total} (${percent}%)`;
   document.getElementById("progress-fill").style.width = `${percent}%`;
+
+  const finishedBtn = document.getElementById("finished-btn");
+  const submitBtn = document.getElementById("submit-btn");
+
+  if (filled === total && !finishedConfirmed) {
+    finishedBtn.style.display = "inline-block";
+    submitBtn.style.display = "none";
+  } else if (finishedConfirmed) {
+    finishedBtn.style.display = "none";
+    submitBtn.style.display = "inline-block";
+    submitBtn.disabled = false;
+  } else {
+    finishedBtn.style.display = "none";
+    submitBtn.style.display = "none";
+  }
 }
 
 function saveCurrentFeedback() {
   const textarea = document.getElementById("feedback");
   feedbackCache[risks[currentIndex].title] = textarea.value.trim();
-  updateProgress(); // ✅ trigger after saving
+  updateProgress();
 }
 
 function renderRisk(index) {
@@ -78,37 +94,37 @@ document.getElementById("next-btn").onclick = () => {
   }
 };
 
+document.getElementById("finished-btn").onclick = () => {
+  finishedConfirmed = true;
+  updateProgress();
+};
+
 document.getElementById("submit-btn").onclick = async () => {
   saveCurrentFeedback();
 
-  const feedback = feedbackCache[risks[currentIndex].title];
-  if (!feedback) {
-    alert("Please enter feedback before submitting.");
-    return;
-  }
-
-  const entry = {
-    risk_title: risks[currentIndex].title,
-    feedback_text: feedback
-  };
+  const allEntries = risks.map(risk => ({
+    risk_title: risk.title,
+    feedback_text: feedbackCache[risk.title] || ""
+  }));
 
   const response = await fetch("https://rusdxiqbcbkqvqnctbrz.supabase.co/rest/v1/feedback", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
-      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ1c2R4aXFiY2JrcXZxbmN0YnJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1NzM2MDUsImV4cCI6MjA3MDE0OTYwNX0.Y1QmIhR3Hl_taG6OshmMclyVmqo7oFVJtBmsNFiWmhU",
+      "apikey": "YOUR_API_KEY",
+      "Authorization": "Bearer YOUR_BEARER_TOKEN",
       "Prefer": "return=minimal"
     },
-    body: JSON.stringify(entry)
+    body: JSON.stringify(allEntries)
   });
 
   if (response.ok) {
-    alert("✅ Feedback submitted!");
+    alert("✅ All feedback submitted successfully!");
   } else {
     alert("❌ Error submitting feedback.");
     console.error(await response.text());
   }
 };
 
+// Initial render
 renderRisk(currentIndex);
