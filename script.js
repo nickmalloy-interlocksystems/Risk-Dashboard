@@ -1,10 +1,34 @@
 const risks = [
-  { title: "Policy / Legal Risk", description: "...", mitigation: "..." },
-  { title: "Technical Risk", description: "...", mitigation: "..." },
-  { title: "Data Risk", description: "...", mitigation: "..." },
-  { title: "Medical Risk", description: "...", mitigation: "..." },
-  { title: "Societal Risk", description: "...", mitigation: "..." },
-  { title: "Environmental Risk", description: "...", mitigation: "..." }
+  {
+    title: "Policy / Legal Risk",
+    description: "The system may inadvertently violate current or emerging regulations, including data sovereignty, export control, or misuse liability laws. Unclear accountability across jurisdictions can also lead to enforcement challenges.",
+    mitigation: "Review deployment plans with legal counsel. Implement audit trails, regulatory impact assessments, and dynamic compliance mapping to evolving global standards."
+  },
+  {
+    title: "Technical Risk",
+    description: "The system may behave unpredictably in edge cases or under adversarial inputs. Failures in logic, memory leakage, or model hallucination could lead to unacceptable performance in safety-critical settings.",
+    mitigation: "Enforce rigorous testing, use formal verification where applicable, implement runtime monitoring, and limit operational domains using safety envelopes."
+  },
+  {
+    title: "Data Risk",
+    description: "Biased, incomplete, or unverified training data may introduce systemic flaws in model behavior. Data poisoning or drift can degrade performance over time.",
+    mitigation: "Adopt strict data provenance tracking, establish validation pipelines, use differential privacy where necessary, and retrain with curated datasets periodically."
+  },
+  {
+    title: "Medical Risk",
+    description: "Incorrect model output or poor UX design in a healthcare context could result in delayed diagnosis, treatment errors, or patient harm.",
+    mitigation: "Implement human-in-the-loop decision systems, validate outputs with clinicians, and comply with FDA, MDR, or equivalent regulatory frameworks."
+  },
+  {
+    title: "Societal Risk",
+    description: "The system may reinforce harmful stereotypes, reduce employment, or concentrate decision-making power, thereby amplifying inequality or eroding trust.",
+    mitigation: "Engage with external stakeholders during development, conduct fairness audits, publish model cards and socioeconomic impact assessments."
+  },
+  {
+    title: "Environmental Risk",
+    description: "Training and deploying large models consumes significant energy and may contribute to carbon emissions, especially when operating at scale.",
+    mitigation: "Use green energy where possible, optimize model efficiency, and track lifecycle emissions using industry frameworks such as ML CO2 Impact."
+  }
 ];
 
 let currentIndex = 0;
