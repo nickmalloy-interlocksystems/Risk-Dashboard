@@ -1,45 +1,35 @@
 const risks = [
   {
-    title: "Policy / Legal Risk",
-    description:
-      "The system may inadvertently violate current or emerging regulations, including data sovereignty, export control, or misuse liability laws. Unclear accountability across jurisdictions can also lead to enforcement challenges.",
-    mitigation:
-      "Review deployment plans with legal counsel. Implement audit trails, regulatory impact assessments, and dynamic compliance mapping to evolving global standards."
+    no: 1,
+    title: 'Plain-language disclaimers (“I’m an AI, not a therapist”)',
+    // Outcome / Impact
+    description: 'Builds trust, reduces liability from misperception',
+    // Resources Needed
+    mitigation: 'Copywriter + product team'
   },
   {
-    title: "Technical Risk",
-    description:
-      "The system may behave unpredictably in edge cases or under adversarial inputs. Failures in logic, memory leakage, or model hallucination could lead to unacceptable performance in safety-critical settings.",
-    mitigation:
-      "Enforce rigorous testing, use formal verification where applicable, implement runtime monitoring, and limit operational domains using safety envelopes."
+    no: 2,
+    title: 'Step-through consent modal (checkboxes for role, age, TOS)',
+    description: 'Legal protection, clear user expectation',
+    mitigation: 'Designer + frontend dev'
   },
   {
-    title: "Data Risk",
-    description:
-      "Biased, incomplete, or unverified training data may introduce systemic flaws in model behavior. Data poisoning or drift can degrade performance over time.",
-    mitigation:
-      "Adopt strict data provenance tracking, establish validation pipelines, use differential privacy where necessary, and retrain with curated datasets periodically."
+    no: 3,
+    title: 'Persistent “Need Help Now?” footer with hotlines',
+    description: 'Meets WHO safety guidelines, saves lives',
+    mitigation: 'Dev for integration + hotline partner'
   },
   {
-    title: "Medical Risk",
-    description:
-      "Incorrect model output or poor UX design in a healthcare context could result in delayed diagnosis, treatment errors, or patient harm.",
-    mitigation:
-      "Implement human-in-the-loop decision systems, validate outputs with clinicians, and comply with FDA, MDR, or equivalent regulatory frameworks."
+    no: 4,
+    title: 'Message-tone style guide (ban words like “cure”)',
+    description: 'Prevents legal/reputation risks from affiliates',
+    mitigation: 'Content lead, 1-day workshop'
   },
   {
-    title: "Societal Risk",
-    description:
-      "The system may reinforce harmful stereotypes, reduce employment, or concentrate decision-making power, thereby amplifying inequality or eroding trust.",
-    mitigation:
-      "Engage with external stakeholders during development, conduct fairness audits, publish model cards and socioeconomic impact assessments."
-  },
-  {
-    title: "Environmental Risk",
-    description:
-      "Training and deploying large models consumes significant energy and may contribute to carbon emissions, especially when operating at scale.",
-    mitigation:
-      "Use green energy where possible, optimize model efficiency, and track lifecycle emissions using industry frameworks such as ML CO2 Impact."
+    no: 5,
+    title: 'Advisory Board page (bios + cadence)',
+    description: 'Adds legitimacy for partners & investors',
+    mitigation: 'Ops/admin support + basic web update'
   }
 ];
 
@@ -73,7 +63,7 @@ function updateRiskSelector() {
 
     const item = document.createElement("div");
     item.className = "risk-selector-item" + (index === currentIndex ? " active" : "");
-    item.innerHTML = `<span class="dot" style="background:${dotColor}"></span>${risk.title}`;
+    item.innerHTML = `<span class="dot" style="background:${dotColor}"></span>${risk.no}. ${risk.title}`;
 
     item.onclick = () => {
       saveCurrentFeedback();
@@ -156,7 +146,7 @@ function renderRisk(index) {
   const m = document.getElementById("mitigation-description");
   const f = document.getElementById("feedback");
 
-  if (t) t.textContent = risk.title;
+  if (t) t.textContent = `${risk.no}. ${risk.title}`;
   if (d) d.textContent = risk.description;
   if (m) m.textContent = risk.mitigation;
 
