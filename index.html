@@ -404,11 +404,9 @@
 
           <div class="meta-row">
             <div class="meta-item"><span class="meta-label">Initial Risk</span><span id="initial-risk-badge" class="risk-badge risk-unknown">—</span></div>
-            <div class="meta-item"><span class="meta-label">Owner</span><span id="risk-owner" class="monosmall">—</span></div>
-            <div class="meta-item"><span class="meta-label">Due</span><span id="risk-due" class="monosmall">—</span></div>
           </div>
 
-          <h3>Mitigation Strategy</h3>
+          <h3>Owner Details</h3>
           <p id="mitigation-description" class="mitigation-text"></p>
         </div>
 
@@ -455,12 +453,11 @@
                 <th class="col-title">Risk</th>
                 <th>Initial&nbsp;Risk</th>
                 <th class="col-status">Status</th>
-                <th class="col-mit">Mitigation</th>
+                <th class="col-owner">Owner Details</th>     <!-- was col-mit / Mitigation -->
                 <th class="col-feedback">Latest Feedback</th>
-                <th>Owner</th>
-                <th>Due</th>
+                <th>Due</th>                          <!-- Owner column removed -->
               </tr>
-            </thead>
+            </thead>            
             <tbody><!-- filled by renderRiskTable --></tbody>
           </table>
         </div>
@@ -682,15 +679,14 @@
         filteredRows.forEach((r, i) => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${(r.index ?? i) + 1}</td>
-            <td class="col-title"><strong>${r.title || ''}</strong><div class="monosmall">${r.description || ''}</div></td>
-            <td>${riskBadgeHtml(r.initialRisk)}</td>
-            <td class="col-status">${r.status || ''}</td>
-            <td class="col-mit">${r.mitigation || ''}</td>
-            <td class="col-feedback">${previewHtml(r.feedbackHtml)}</td>
-            <td>${r.owner || '—'}</td>
-            <td>${r.due || '—'}</td>
-          `;
+  <td>${(r.index ?? i) + 1}</td>
+  <td class="col-title"><strong>${r.title || ''}</strong><div class="monosmall">${r.description || ''}</div></td>
+  <td>${riskBadgeHtml(r.initialRisk)}</td>
+  <td class="col-status">${r.status || ''}</td>
+  <td class="col-owner">${r.owner || '—'}</td>           <!-- NEW: owner here -->
+  <td class="col-feedback">${previewHtml(r.feedbackHtml)}</td>
+  <td>${r.due || '—'}</td>
+`;
           tr.addEventListener('click', () => {
             setView('detail');
             window.dispatchEvent(new CustomEvent('riskTabSelected', { detail: { index: r.index ?? i } }));
@@ -701,31 +697,30 @@
       }
 
       function filterRows(q) {
-        const term = (q || '').toLowerCase();
-        if (!term) return rowsCache.slice();
-        return rowsCache.filter(r =>
-          (r.title || '').toLowerCase().includes(term) ||
-          (r.description || '').toLowerCase().includes(term) ||
-          (r.mitigation || '').toLowerCase().includes(term) ||
-          (r.status || '').toLowerCase().includes(term) ||
-          (r.owner || '').toLowerCase().includes(term)
-        );
-      }
+  const term = (q || '').toLowerCase();
+  if (!term) return rowsCache.slice();
+  return rowsCache.filter(r =>
+    (r.title || '').toLowerCase().includes(term) ||
+    (r.description || '').toLowerCase().includes(term) ||
+    (r.status || '').toLowerCase().includes(term) ||
+    (r.owner || '').toLowerCase().includes(term)
+  );
+}
+
 
       search.addEventListener('input', () => render(filterRows(search.value)));
 
       exportBtn.addEventListener('click', () => {
-        const headers = ['#','Risk','Initial Risk','Status','Mitigation','Latest Feedback','Owner','Due'];
+        const headers = ['#','Risk','Initial Risk','Status','Owner','Latest Feedback','Due'];
         const items = filterRows(search.value);
         const rows = items.map((r, i) => [
-          (r.index ?? i) + 1,
-          (r.title || '').replaceAll('"','""'),
-          (typeof r.initialRisk === 'number' ? `RPN ${r.initialRisk}` : (r.initialRisk || '')),
-          r.status || '',
-          (r.mitigation || '').replaceAll('"','""'),
-          previewHtml(r.feedbackHtml || '').replaceAll('"','""'),
-          r.owner || '',
-          r.due || ''
+        (r.index ?? i) + 1,
+  (r.title || '').replaceAll('"','""'),
+  (typeof r.initialRisk === 'number' ? `RPN ${r.initialRisk}` : (r.initialRisk || '')),
+  r.status || '',
+  (r.owner || ''),                                   // owner now here
+  previewHtml(r.feedbackHtml || '').replaceAll('"','""'),
+  r.due || ''
         ]);
         const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

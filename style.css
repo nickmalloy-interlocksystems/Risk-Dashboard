@@ -120,8 +120,7 @@ body.view-table #risk-container{
   max-height: calc(100vh - var(--table-viewport-offset));
   overflow-y:auto; overflow-x:hidden;
   border:1px solid #e5e7eb; border-radius:12px;
-  /* was margin-right: var(--page-gutter);  ❌ caused clipping */
-  padding-right: 12px;                   /* ✅ inner buffer instead */
+  padding-right: 12px;                   /* inner buffer */
   scrollbar-gutter: stable;              /* reserve space for vertical scrollbar */
 }
 
@@ -141,9 +140,8 @@ thead th, tbody td{
   hyphens: manual;
 }
 
-/* Long-text columns can wrap */
+/* Long-text columns can wrap (Owner is NOT long text anymore) */
 #risk-table th.col-title,    #risk-table td.col-title,
-#risk-table th.col-mit,      #risk-table td.col-mit,
 #risk-table th.col-feedback, #risk-table td.col-feedback{
   white-space: normal;
   overflow-wrap: anywhere;
@@ -159,17 +157,23 @@ thead th{
 /* Column sizing */
 th:first-child, td:first-child{ width:56px; }
 .col-title   { width:40%; min-width:360px; }
-.col-status  { width:10%; min-width:110px; }
-.col-mit     { width:26%; min-width:260px; }
+.col-status  { width:10%; min-width:110px; white-space:nowrap; }
+.col-owner   { width:160px; min-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } /* NEW */
 .col-feedback{ width:24%; min-width:240px; }
 
-/* Initial Risk / Owner / Due — wider & no wrap */
+/* Initial Risk / Owner / Due — wider & no wrap (indices updated: Owner=5, Due=7) */
 #risk-table thead th:nth-child(3),
-#risk-table tbody td:nth-child(3){ width:160px; min-width:140px; white-space:nowrap; word-break:keep-all; text-align:left; }
+#risk-table tbody td:nth-child(3){
+  width:160px; min-width:140px; white-space:nowrap; word-break:keep-all; text-align:left;
+}
+#risk-table thead th:nth-child(5),
+#risk-table tbody td:nth-child(5){
+  width:160px; min-width:140px; white-space:nowrap; word-break:keep-all; text-align:left;
+}
 #risk-table thead th:nth-child(7),
-#risk-table tbody td:nth-child(7){ width:160px; min-width:140px; white-space:nowrap; word-break:keep-all; text-align:left; }
-#risk-table thead th:nth-child(8),
-#risk-table tbody td:nth-child(8){ width:140px; min-width:120px; white-space:nowrap; word-break:keep-all; text-align:left; }
+#risk-table tbody td:nth-child(7){
+  width:140px; min-width:120px; white-space:nowrap; word-break:keep-all; text-align:left;
+}
 
 /* Edge padding */
 thead th:last-child, tbody td:last-child{ padding-right:12px; }
@@ -285,25 +289,24 @@ body.view-table #risk-container { overflow: hidden; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Owner */
-#risk-table th:nth-child(7),
-#risk-table td:nth-child(7){
+/* Owner (now col 5) */
+#risk-table th:nth-child(5),
+#risk-table td:nth-child(5){
   width: 140px; min-width: 120px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* Due */
-#risk-table th:nth-child(8),
-#risk-table td:nth-child(8){
+/* Due (now col 7) */
+#risk-table th:nth-child(7),
+#risk-table td:nth-child(7){
   width: 120px; min-width: 110px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 /* Long-text columns get the remaining space and may wrap */
 #risk-table th.col-title,    #risk-table td.col-title,
-#risk-table th.col-mit,      #risk-table td.col-mit,
+#risk-table th.col-owner,    #risk-table td.col-owner, /* harmless if header/td carry the class */
 #risk-table th.col-feedback, #risk-table td.col-feedback{
-  white-space: normal;        /* allow multiline */
   overflow-wrap: anywhere;
 }
 
@@ -312,21 +315,13 @@ body.view-table #risk-container { overflow: hidden; }
 #risk-table tbody td:last-child{ padding-right: 12px; }
 
 /* === Detail view: when sidebar is collapsed, let the panel fill the row === */
-
-/* stretch the card to the full 1fr column */
 body.sidebar-collapsed.view-detail #risk-container{
-  max-width: none;     /* remove the 900px cap */
-  width: 100%;         /* fill the available grid column */
+  max-width: none;
+  width: 100%;
+  padding-right: 18px; /* small right buffer */
 }
-
-/* keep inner elements behaving nicely at full width */
 body.sidebar-collapsed.view-detail #risk-container .tabs,
 body.sidebar-collapsed.view-detail #risk-container #progress-bar-container{
   max-width: 100%;
   width: 100%;
-}
-
-/* optional: a tiny right buffer so content doesn't kiss the edge */
-body.sidebar-collapsed.view-detail #risk-container{
-  padding-right: 18px; /* match your left padding (~18px) */
 }
