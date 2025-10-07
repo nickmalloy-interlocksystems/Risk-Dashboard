@@ -5,64 +5,771 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Risk Review Dashboard</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ---------- Page & layout ---------- */
+    :root {
+      --gap-sm: 8px;
+      --gap-md: 12px;
+      --gap-lg: 16px;
+      --border: #e5e7eb;
+      --text: #111827;
+      --muted: #6b7280;
+      --bg-subtle: #f9fafb;
+      --bg-soft: #f3f4f6;
+      --radius: 8px;
+      --brand: #2D7DFE;
+
+      /* Sidebar / rail sizing */
+      --sidebar-open: 260px;              /* full list width */
+      --rail-w: 56px;                     /* slim rail width */
+      --sidebar-col: var(--sidebar-open); /* grid col width (varies by state) */
+    }
+
+    html, body { height: 100%; }
+    body { margin: 0; color: var(--text); background: #fff; }
+
+    header { position: sticky; top: 0; background: #fff; z-index: 50; border-bottom: 1px solid var(--border); }
+    header .bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding: 10px 14px; }
+    header h1 { font-size: 18px; margin: 0; line-height: 1.2; }
+    header .logo { height: 28px; width: auto; }
+
+    main {
+      display: grid;
+      grid-template-columns: var(--sidebar-col) 1fr;
+      gap: var(--gap-lg);
+      min-height: calc(100vh - 56px);
+      padding: var(--gap-lg);
+      align-items: start;
+      transition: grid-template-columns .25s ease;
+    }
+
+    /* States: control the column width via body classes */
+    body.sidebar-collapsed.view-detail { --sidebar-col: var(--rail-w); }  /* show rail */
+    body.sidebar-collapsed.view-table  { --sidebar-col: 0px; }            /* hide completely */
+    body:not(.sidebar-collapsed)       { --sidebar-col: var(--sidebar-open); }
+
+    /* ---------- Sidebar (full list) ---------- */
+    aside#sidebar {
+      position: sticky;
+      top: calc(56px + var(--gap-lg));
+      max-height: calc(100vh - 56px - var(--gap-lg)*2);
+      overflow: visible;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+
+      width: var(--sidebar-open);
+      transform: translateX(0);
+      transition: transform .25s ease, opacity .25s ease, border-color .25s ease;
+    }
+    /* slide off to the left when collapsed */
+    body.sidebar-collapsed aside#sidebar {
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+      border-color: transparent;
+    }
+
+    /* Hide button INSIDE the sidebar (top-left) */
+    .sidebar-toggle {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      z-index: 1;
+    }
+    .sidebar-toggle:hover { filter: brightness(.96); }
+
+    /* Sidebar list padding (so it doesn't sit under the button) */
+    #risk-selector {
+      padding: calc(var(--gap-md) + 40px) var(--gap-md) var(--gap-md) var(--gap-md);
+      overflow: auto; max-height: 100%;
+    }
+
+    /* Risk selector items */
+    .risk-selector-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .risk-selector-item:hover { background: #f0f4fa; }
+    .risk-selector-item.active {
+      background: #eaf1ff;
+      font-weight: 700;
+      outline: 2px solid #2D7DFE20;
+    }
+    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; background: red; }
+    .dot.green { background: green; }
+
+    /* ---------- Rail (visible only in detail+collapsed) ---------- */
+    #sidebar-rail {
+      display: none; /* default hidden */
+      position: sticky;
+      top: calc(56px + var(--gap-lg));
+      align-self: start;
+      max-height: calc(100vh - 56px - var(--gap-lg)*2);
+      overflow: auto;
+
+      width: var(--rail-w);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 8px 6px;
+      box-shadow: 0 1px 8px rgba(0,0,0,.06);
+    }
+    /* Show the rail ONLY when collapsed + detail view */
+    body.sidebar-collapsed.view-detail #sidebar-rail { display: block; }
+    /* Never show any “show button”/rail in table view */
+    body.view-table #sidebar-rail { display: none !important; }
+
+    .rail-toggle {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .rail-toggle:hover { filter: brightness(.96); }
+
+    .rail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+    .rail-item {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+      color: #111827;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      cursor: pointer;
+      user-select: none;
+    }
+    .rail-item:hover { background: #e5e7eb; }
+    .rail-item.active {
+      background: #111827; color: #fff; border-color: #111827;
+    }
+    .rail-item.done {
+      background: #e6fbe9; border-color: #b6f3c6; /* hint that it has feedback/status */
+    }
+
+    /* ---------- Content column ---------- */
+    #risk-container {
+      display: grid;
+      grid-template-rows: auto auto auto auto 1fr auto;
+      gap: var(--gap-md);
+      align-content: start;
+      min-width: 0;
+    }
+
+    /* Tabs (right-side view toggle) */
+    .tabs {
+      position: sticky;
+      top: 56px;
+      z-index: 40;
+      background: #fff;
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding: .35rem 0;
+    }
+    .tabs .spacer { flex: 1; }
+
+    /* Progress */
+    #progress-bar-container { display: grid; grid-template-columns: auto 1fr; gap: var(--gap-sm); align-items: center; }
+    .progress-label { font-size: 12px; color: var(--muted); }
+    .progress-track { height: 8px; background: #f3f4f6; border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #111827; width: 0; transition: width .25s; }
+
+    /* Headings & text blocks */
+    h2#risk-title { font-size: 18px; margin: 0; }
+    h3 { font-size: 14px; margin: var(--gap-sm) 0 var(--gap-sm); }
+    .risk-text, .mitigation-text { margin: 0 0 var(--gap-sm); line-height: 1.35; }
+    .risk-text:empty, .mitigation-text:empty { display: none; }
+
+    /* Meta row */
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--gap-md);
+      align-items: center;
+      margin: 2px 0 var(--gap-sm);
+    }
+    .meta-item { display:flex; align-items:center; gap:6px; min-height: 28px; }
+    .meta-label { color: var(--muted); font-size: 12px; }
+    .risk-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding: 4px 8px; border-radius: 999px; font-weight: 600; font-size: 12px;
+      border: 1px solid var(--border); background: #fff;
+    }
+    .risk-low      { color:#0f5132; background:#d1fae5; border-color:#86efac; }
+    .risk-medium   { color:#7a5200; background:#fff4d6; border-color:#fde68a; }
+    .risk-high     { color:#7f1d1d; background:#fee2e2; border-color:#fecaca; }
+    .risk-critical { color:#7f1d1d; background:#ffdad6; border-color:#fca5a5; }
+    .risk-unknown  { color:#374151; background:#f3f4f6; }
+
+    /* Status group */
+    .status-group { margin: 0 0 var(--gap-sm); }
+
+    /* Toolbar + editor */
+    .toolbar {
+      display: flex;
+      gap: .25rem;
+      flex-wrap: wrap;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .2rem;
+      background: var(--bg-subtle);
+    }
+    .tool-btn {
+      appearance: none;
+      background: var(--bg-soft);
+      border: 1px solid #d1d5db;
+      padding: .3rem .45rem;
+      border-radius: 6px;
+      font: inherit;
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tool-btn:hover { background: #e5e7eb; border-color: #9ca3af; }
+    .tool-btn:active { background: #d1d5db; }
+    .tool-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+    #feedback-editor {
+      min-height: 140px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .6rem;
+      outline: none;
+      background: white;
+      line-height: 1.3;
+    }
+    #feedback-editor.empty::before {
+      content: attr(data-placeholder);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    /* Nav buttons dock */
+    .nav-buttons {
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0), #fff 40%);
+      padding-top: var(--gap-sm);
+      display: flex;
+      gap: var(--gap-sm);
+      justify-content: flex-end;
+      align-items: center;
+      padding-bottom: var(--gap-sm);
+    }
+    .nav-buttons button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      padding: .45rem .7rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .nav-buttons button:hover { background: var(--bg-soft); }
+
+    .divider { width:1px; height:1.5rem; background:var(--border); margin:0 .25rem; }
+
+    /* ---------- TABLE VIEW ---------- */
+    #table-view[hidden] { display:none; }
+    #card-view[hidden]  { display:none; }
+
+    .view-toggle { display:flex; gap:8px; align-items:center; }
+    .view-toggle button {
+      appearance:none; border:1px solid var(--border); background:#fff; color:#111827;
+      padding:.35rem .55rem; border-radius:8px; cursor:pointer;
+    }
+    .view-toggle button.active { background:#111827; color:#fff; border-color:#111827; }
+
+    .table-actions {
+      display:flex; gap:8px; align-items:center; justify-content: space-between;
+      margin: 4px 0 8px;
+    }
+    .table-actions .left { display:flex; gap:8px; align-items:center; }
+    .table-actions input[type="search"] {
+      border:1px solid var(--border); border-radius:8px; padding:.4rem .6rem; min-width:240px;
+      outline:none; background:#fff;
+    }
+    .table-actions .btn {
+      appearance:none; border:1px solid var(--border); background:#fff; padding:.35rem .55rem; border-radius:8px; cursor:pointer;
+    }
+    .table-wrap { border:1px solid var(--border); border-radius:12px; overflow:auto; }
+    table { width:100%; border-collapse:separate; border-spacing:0; background:#fff; font-size:14px; }
+    thead th { position: sticky; top:0; background:#f8fafc; text-align:left; padding:10px; border-bottom:1px solid var(--border); font-weight:600; }
+    tbody td { padding:10px; border-bottom:1px solid #f1f5f9; vertical-align: top; }
+    tbody tr:hover { background:#f9fafb; }
+    .col-title { min-width: 320px; }
+    .col-mit { min-width: 240px; color:#111827; }
+    .col-status { min-width: 160px; }
+    .col-feedback { min-width: 260px; color:#374151; }
+    .monosmall { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; color:#6b7280; }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 820px) {
+      header .bar { padding: 8px 12px; }
+      main {
+        grid-template-columns: 1fr;
+        gap: var(--gap-md);
+        padding: var(--gap-md);
+      }
+      aside#sidebar {
+        position: relative;
+        top: 0;
+        max-height: none;
+        transform: none; opacity: 1; pointer-events: auto;
+      }
+      #sidebar-rail { display: none !important; }
+      .tabs { top: auto; position: sticky; top: 56px; }
+      .meta-row { grid-template-columns: 1fr; }
+      .table-actions { flex-direction: column; align-items: stretch; gap:6px; }
+      .table-actions .left { justify-content: space-between; }
+    }
+  </style>
 </head>
-<body>
+<body class="view-detail"><!-- default to detail view -->
   <header>
-    <img src="logo.png" alt="Logo" class="logo" />
-    <h1>🛡️ Risk Review and Response</h1>
+    <div class="bar">
+      <div style="display:flex; align-items:center; gap:.6rem;">
+        <img src="logo.png" alt="Logo" class="logo" />
+        <h1>🛡️ Risk Review and Response</h1>
+      </div>
+      <!-- (no header toggle; it's inside the sidebar/rail) -->
+    </div>
   </header>
 
   <main>
+    <!-- Full sidebar (slides away when collapsed) -->
     <aside id="sidebar">
-
-      <!-- Sidebar risk selector -->
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Hide list" title="Hide list">⟨ Hide</button>
       <div id="risk-selector" class="open"></div>
     </aside>
 
+    <!-- Slim rail that remains in collapsed detail view -->
+    <div id="sidebar-rail" aria-label="Collapsed list rail">
+      <button id="railShow" class="rail-toggle" aria-label="Show list" title="Show list">⟩ Show</button>
+      <div id="sidebar-rail-list" class="rail-list" role="tablist" aria-label="Risks (compact)"></div>
+    </div>
+
     <div id="risk-container">
+      <!-- Tabs / View toggle -->
+      <nav id="risk-tabs" class="tabs" role="tablist" aria-label="Risks">
+        <span class="spacer"></span>
+        <div class="view-toggle" aria-label="Toggle view">
+          <button id="btn-detail-view" class="active" title="Detail view">Detail</button>
+          <button id="btn-table-view" title="Table view">Table</button>
+        </div>
+      </nav>
+
+      <!-- Progress -->
       <div id="progress-bar-container">
-        <div class="progress-label">
-          <span id="progress-text">Progress: Loading...</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" id="progress-fill"></div>
-        </div>
+        <div class="progress-label"><span id="progress-text">Progress: Loading...</span></div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
       </div>
 
-      <h2 id="risk-title"></h2>
-      <p id="risk-description" class="risk-text"></p>
+      <!-- ====== CARD / DETAIL VIEW ====== -->
+      <section id="card-view">
+        <div>
+          <h2 id="risk-title"></h2>
+          <p id="risk-description" class="risk-text"></p>
 
-      <h3>✅ Mitigation Strategy</h3>
-      <p id="mitigation-description" class="mitigation-text"></p>
-<!-- Status selector -->
-<div id="status-group" class="status-group"></div>
+          <div class="meta-row">
+            <div class="meta-item"><span class="meta-label">Initial Risk</span><span id="initial-risk-badge" class="risk-badge risk-unknown">—</span></div>
+            <div class="meta-item"><span class="meta-label">Owner</span><span id="risk-owner" class="monosmall">—</span></div>
+            <div class="meta-item"><span class="meta-label">Due</span><span id="risk-due" class="monosmall">—</span></div>
+          </div>
 
-      <textarea id="feedback" placeholder="Provide Feedback Here."></textarea>
+          <h3>Mitigation Strategy</h3>
+          <p id="mitigation-description" class="mitigation-text"></p>
+        </div>
 
-      <div class="nav-buttons">
-        <button id="prev-btn">Previous</button>
-        <button id="finished-btn" style="display: none;">Finished</button>
-        <button id="next-btn">Next</button>
-        <button id="submit-btn" style="display: none;" disabled>Submit Feedback</button>
-      </div>
+        <div>
+          <div id="status-group" class="status-group"></div>
+
+          <div class="toolbar" aria-label="Formatting toolbar">
+            <button class="tool-btn" data-cmd="bold" title="Bold (⌘/Ctrl+B)"><strong>B</strong></button>
+            <button class="tool-btn" data-cmd="italic" title="Italic (⌘/Ctrl+I)"><em>I</em></button>
+            <button class="tool-btn" data-cmd="underline" title="Underline (⌘/Ctrl+U)"><u>U</u></button>
+            <span class="divider"></span>
+            <button class="tool-btn" data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+            <button class="tool-btn" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+            <button class="tool-btn" id="link-btn" title="Insert link">Link</button>
+            <span class="divider"></span>
+            <button class="tool-btn" data-cmd="undo" title="Undo">Undo</button>
+            <button class="tool-btn" data-cmd="redo" title="Redo">Redo</button>
+            <button class="tool-btn" id="clear-btn" title="Clear formatting">Clear</button>
+          </div>
+
+          <div id="feedback-editor" class="empty" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Provide Feedback Here. Use **bold**, *italics*, bullets, numbered lists, and links."></div>
+          <textarea id="feedback" style="display:none;"></textarea>
+        </div>
+
+        <div class="nav-buttons">
+          <button id="prev-btn">Previous</button>
+          <button id="finished-btn" style="display: none;">Finished</button>
+          <button id="next-btn">Next</button>
+          <button id="submit-btn" style="display: none;" disabled>Submit Feedback</button>
+        </div>
+      </section>
+
+      <!-- ====== TABLE VIEW ====== -->
+      <section id="table-view" hidden>
+        <div class="table-actions">
+          <div class="left"><input id="table-search" type="search" placeholder="Filter risks..." /></div>
+          <div class="right"><button class="btn" id="export-csv-btn">Export CSV</button></div>
+        </div>
+        <div class="table-wrap">
+          <table id="risk-table" role="table" aria-label="Risk table">
+            <thead>
+              <tr>
+                <th style="width:52px;">#</th>
+                <th class="col-title">Risk</th>
+                <th>Initial&nbsp;Risk</th>
+                <th class="col-status">Status</th>
+                <th class="col-mit">Mitigation</th>
+                <th class="col-feedback">Latest Feedback</th>
+                <th>Owner</th>
+                <th>Due</th>
+              </tr>
+            </thead>
+            <tbody><!-- filled by renderRiskTable --></tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
 
   <script>
-    // Toggle mobile sidebar
-    document.getElementById('toggleSidebar').addEventListener('click', function () {
-      document.getElementById('risk-selector').classList.toggle('open');
-    });
+    /* ---------- Collapsible sidebar + rail helpers ---------- */
+    (function setupCollapseAndRail() {
+      const btnHide = document.getElementById("sidebarToggle");
+      const btnShow = document.getElementById("railShow");
+      const railList = document.getElementById("sidebar-rail-list");
+      const STORAGE_KEY = "riskSidebarCollapsed";
+
+      function setCollapsed(collapsed, persist = true) {
+        document.body.classList.toggle("sidebar-collapsed", collapsed);
+        if (btnHide) {
+          btnHide.setAttribute("aria-expanded", (!collapsed).toString());
+          btnHide.title = collapsed ? "Show list (Ctrl/Cmd+\\)" : "Hide list (Ctrl/Cmd+\\)";
+          btnHide.textContent = collapsed ? "⟩ Show" : "⟨ Hide";
+        }
+        if (persist) { try { localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0"); } catch {} }
+        buildRail(); // ensure rail reflects current selection/availability
+      }
+      function getCollapsed() { try { return localStorage.getItem(STORAGE_KEY) === "1"; } catch { return false; } }
+
+      // Build the rail from the visible items in the sidebar (no dependency on data structure)
+      function buildRail() {
+        if (!railList) return;
+        railList.innerHTML = "";
+        const items = Array.from(document.querySelectorAll("#risk-selector .risk-selector-item"));
+        if (!items.length) return;
+
+        items.forEach((item, idx) => {
+          const nMatch = item.textContent.trim().match(/^(\d+)\./);
+          const num = nMatch ? nMatch[1] : String(idx + 1);
+
+          const el = document.createElement("button");
+          el.className = "rail-item";
+          el.type = "button";
+          el.setAttribute("aria-label", "Open risk " + num);
+          el.textContent = num;
+
+          // Active state mirrors sidebar selection
+          if (item.classList.contains("active")) el.classList.add("active");
+
+          // Done hint if its dot is green
+          const dot = item.querySelector(".dot");
+          const isDone = dot && (dot.classList.contains("green") || (dot.style && /green/i.test(dot.style.background || "")));
+          if (isDone) el.classList.add("done");
+
+          el.addEventListener("click", () => {
+            // Jump to that item by triggering the original click
+            item.click();
+          });
+
+          railList.appendChild(el);
+        });
+      }
+
+      // Init from saved preference
+      setCollapsed(getCollapsed(), /*persist*/ false);
+
+      if (btnHide) btnHide.addEventListener("click", () => setCollapsed(!document.body.classList.contains("sidebar-collapsed")));
+      if (btnShow) btnShow.addEventListener("click", () => setCollapsed(false));
+
+      // Keyboard shortcut: Cmd/Ctrl + \
+      window.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "\\") {
+          e.preventDefault();
+          setCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+        }
+      });
+
+      // Rebuild rail whenever the left list changes or selection changes
+      const observer = new MutationObserver(buildRail);
+      const selector = document.getElementById("risk-selector");
+      if (selector) observer.observe(selector, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+
+      window.addEventListener("riskIndexChanged", buildRail);
+      window.buildSidebarRail = buildRail; // optional external call
+      window.setSidebarCollapsed = setCollapsed;
+      window.getSidebarCollapsed = getCollapsed;
+    })();
+
+    /* ---------- View toggle (adds body class so rail hides in table view) ---------- */
+    const btnDetail = document.getElementById('btn-detail-view');
+    const btnTable  = document.getElementById('btn-table-view');
+    const cardView  = document.getElementById('card-view');
+    const tableView = document.getElementById('table-view');
+    let _sidebarWasCollapsed = null;
+
+    function setView(mode) {
+      const isTable = mode === 'table';
+      document.body.classList.toggle('view-table', isTable);
+      document.body.classList.toggle('view-detail', !isTable);
+
+      tableView.hidden = !isTable;
+      cardView.hidden  =  isTable;
+      btnTable.classList.toggle('active', isTable);
+      btnDetail.classList.toggle('active', !isTable);
+
+      // Auto-collapse while in table view, restore prior state on detail
+      if (typeof window.setSidebarCollapsed === 'function') {
+        if (isTable) {
+          if (_sidebarWasCollapsed === null) {
+            _sidebarWasCollapsed = window.getSidebarCollapsed
+              ? window.getSidebarCollapsed()
+              : document.body.classList.contains('sidebar-collapsed');
+          }
+          window.setSidebarCollapsed(true, /*persist*/ false);
+        } else if (_sidebarWasCollapsed !== null) {
+          window.setSidebarCollapsed(_sidebarWasCollapsed, /*persist*/ false);
+          _sidebarWasCollapsed = null;
+        }
+      }
+
+      window.dispatchEvent(new CustomEvent('riskViewChanged', { detail: { mode } }));
+    }
+    btnDetail.addEventListener('click', () => setView('detail'));
+    btnTable .addEventListener('click', () => setView('table'));
+
+    /* ---------- Minimal editor setup (unchanged) ---------- */
+    (function setupEditor() {
+      const editor = document.getElementById('feedback-editor');
+      const hiddenFeedback = document.getElementById('feedback');
+      const submitBtn = document.getElementById('submit-btn');
+
+      function updateEmptyState() {
+        const text = editor.innerText.trim();
+        editor.classList.toggle('empty', text.length === 0);
+        if (hiddenFeedback) hiddenFeedback.value = editor.innerHTML.trim();
+        if (submitBtn) submitBtn.disabled = text.length === 0;
+      }
+
+      document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cmd = btn.getAttribute('data-cmd');
+          document.execCommand(cmd, false, null);
+          editor.focus();
+          updateEmptyState();
+        });
+      });
+
+      document.getElementById('clear-btn').addEventListener('click', () => {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount) {
+          document.execCommand('removeFormat');
+          document.execCommand('unlink');
+        }
+        editor.focus();
+        updateEmptyState();
+      });
+
+      document.getElementById('link-btn').addEventListener('click', () => {
+        let url = prompt('Enter URL (https://...)');
+        if (!url) return;
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        document.execCommand('createLink', false, url);
+        editor.focus();
+        updateEmptyState();
+      });
+
+      editor.addEventListener('input', updateEmptyState);
+      editor.addEventListener('blur', updateEmptyState);
+      editor.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        document.execCommand('insertText', false, text);
+        updateEmptyState();
+      });
+
+      editor.addEventListener('keyup', (e) => {
+        if (e.ctrlKey || e.metaKey) updateEmptyState();
+      });
+
+      updateEmptyState();
+      window.getFeedbackHtml = () => editor.innerHTML.trim();
+      window.setFeedbackHtml = (html) => { editor.innerHTML = html || ''; updateEmptyState(); };
+      window.clearFeedback   = () => { editor.innerHTML = ''; updateEmptyState(); };
+    })();
+
+    /* ---------- Table view renderer (unchanged) ---------- */
+    (function setupTableView() {
+      const tbody = document.querySelector('#risk-table tbody');
+      const search = document.getElementById('table-search');
+      const exportBtn = document.getElementById('export-csv-btn');
+
+      let rowsCache = [];
+
+      function riskBadgeHtml(level) {
+        const t = (level ?? '').toString().trim();
+        const norm = t.toLowerCase();
+        let cls = 'risk-unknown', label = t || '—';
+        if (['low','l'].includes(norm)) { cls='risk-low'; label='Low'; }
+        else if (['medium','med','m'].includes(norm)) { cls='risk-medium'; label='Medium'; }
+        else if (['high','h'].includes(norm)) { cls='risk-high'; label='High'; }
+        else if (['critical','crit','c'].includes(norm)) { cls='risk-critical'; label='Critical'; }
+        else if (!isNaN(Number(t)) && t !== '') {
+          const n = Number(t);
+          if (n < 4) cls='risk-low';
+          else if (n < 7) cls='risk-medium';
+          else if (n < 9) cls='risk-high';
+          else cls='risk-critical';
+          label = `RPN ${n}`;
+        }
+        return `<span class="risk-badge ${cls}">${label}</span>`;
+      }
+
+      function previewHtml(html) {
+        const tmp = document.createElement('div'); tmp.innerHTML = html || '';
+        const text = (tmp.innerText || '').trim().replace(/\s+/g, ' ');
+        return text.length > 140 ? text.slice(0, 137) + '…' : text;
+      }
+
+      function render(filteredRows) {
+        tbody.innerHTML = '';
+        filteredRows.forEach((r, i) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${(r.index ?? i) + 1}</td>
+            <td class="col-title"><strong>${r.title || ''}</strong><div class="monosmall">${r.description || ''}</div></td>
+            <td>${riskBadgeHtml(r.initialRisk)}</td>
+            <td class="col-status">${r.status || ''}</td>
+            <td class="col-mit">${r.mitigation || ''}</td>
+            <td class="col-feedback">${previewHtml(r.feedbackHtml)}</td>
+            <td>${r.owner || '—'}</td>
+            <td>${r.due || '—'}</td>
+          `;
+          tr.addEventListener('click', () => {
+            setView('detail');
+            window.dispatchEvent(new CustomEvent('riskTabSelected', { detail: { index: r.index ?? i } }));
+            window.dispatchEvent(new CustomEvent('riskIndexChanged', { detail: { index: r.index ?? i } }));
+          });
+          tbody.appendChild(tr);
+        });
+      }
+
+      function filterRows(q) {
+        const term = (q || '').toLowerCase();
+        if (!term) return rowsCache.slice();
+        return rowsCache.filter(r =>
+          (r.title || '').toLowerCase().includes(term) ||
+          (r.description || '').toLowerCase().includes(term) ||
+          (r.mitigation || '').toLowerCase().includes(term) ||
+          (r.status || '').toLowerCase().includes(term) ||
+          (r.owner || '').toLowerCase().includes(term)
+        );
+      }
+
+      search.addEventListener('input', () => render(filterRows(search.value)));
+
+      exportBtn.addEventListener('click', () => {
+        const headers = ['#','Risk','Initial Risk','Status','Mitigation','Latest Feedback','Owner','Due'];
+        const items = filterRows(search.value);
+        const rows = items.map((r, i) => [
+          (r.index ?? i) + 1,
+          (r.title || '').replaceAll('"','""'),
+          (typeof r.initialRisk === 'number' ? `RPN ${r.initialRisk}` : (r.initialRisk || '')),
+          r.status || '',
+          (r.mitigation || '').replaceAll('"','""'),
+          previewHtml(r.feedbackHtml || '').replaceAll('"','""'),
+          r.owner || '',
+          r.due || ''
+        ]);
+        const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'risk-table.csv'; a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      window.renderRiskTable = function(rows) {
+        rowsCache = Array.isArray(rows) ? rows.map((r, i)=>({ ...r, index: r.index ?? i })) : [];
+        render(rowsCache);
+      };
+    })();
+
+    /* ---------- Minimal Tabs API just to keep right-side toggle ---------- */
+    (function setupTabsAPI() {
+      const tabsRoot = document.getElementById('risk-tabs');
+      const btnDetail = document.getElementById('btn-detail-view');
+      const btnTable  = document.getElementById('btn-table-view');
+
+      function renderRiskTabs() {
+        if (!tabsRoot) return;
+        tabsRoot.innerHTML = '';
+        const viewGroup = document.createElement('div');
+        viewGroup.className = 'view-toggle';
+        viewGroup.appendChild(btnDetail);
+        viewGroup.appendChild(btnTable);
+        tabsRoot.appendChild(viewGroup);
+      }
+      window.renderRiskTabs = renderRiskTabs;
+    })();
   </script>
+
+  <!-- keep your original script include -->
   <script src="script.js"></script>
-  <div id="thank-you-screen" style="display:none; padding: 3em; text-align: center;">
-    <h1>🎉 Thank You!</h1>
-    <p>Your feedback has been successfully submitted.</p>
-    <p>You may now safely close your browser.</p>
-  
-    <h2>📝 Your Responses:</h2>
-    <div id="response-summary" style="text-align: left; max-width: 600px; margin: 0 auto;"></div>
+
+  <div id="thank-you-screen" style="display:none; padding: 2rem; text-align: center;">
+    <h1 style="margin:0 0 .5rem;">🎉 Thank You!</h1>
+    <p style="margin:.25rem 0;">Your feedback has been successfully submitted.</p>
+    <p style="margin:.25rem 0 1rem;">You may now safely close your browser.</p>
+
+    <h2 style="font-size:16px; margin: 1rem 0 .5rem;">📝 Your Responses:</h2>
+    <div id="response-summary" style="text-align:left; max-width: 720px; margin: 0 auto;"></div>
   </div>
-  
 </body>
 </html>

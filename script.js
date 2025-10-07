@@ -1,40 +1,14 @@
+/* ------------------ Data ------------------ */
 const risks = [
-  {
-    no: 1,
-    title: 'Plain-language disclaimers (“I’m an AI, not a therapist”)',
-    // Outcome / Impact
-    description: 'Builds trust, reduces liability from misperception',
-    // Resources Needed
-    mitigation: 'Copywriter + product team'
-  },
-  {
-    no: 2,
-    title: 'Step-through consent modal (checkboxes for role, age, TOS)',
-    description: 'Legal protection, clear user expectation',
-    mitigation: 'Designer + frontend dev'
-  },
-  {
-    no: 3,
-    title: 'Persistent “Need Help Now?” footer with hotlines',
-    description: 'Meets WHO safety guidelines, saves lives',
-    mitigation: 'Dev for integration + hotline partner'
-  },
-  {
-    no: 4,
-    title: 'Message-tone style guide (ban words like “cure”)',
-    description: 'Prevents legal/reputation risks from affiliates',
-    mitigation: 'Content lead, 1-day workshop'
-  },
-  {
-    no: 5,
-    title: 'Advisory Board page (bios + cadence)',
-    description: 'Adds legitimacy for partners & investors',
-    mitigation: 'Ops/admin support + basic web update'
-  }
+  { no: 1, title: 'Plain-language disclaimers (“I’m an AI, not a therapist”)', description: 'Builds trust, reduces liability from misperception', mitigation: 'Copywriter + product team', initialRisk: 'High',    owner: 'Product',  due: '2025-10-20' },
+  { no: 2, title: 'Step-through consent modal (checkboxes for role, age, TOS)', description: 'Legal protection, clear user expectation',           mitigation: 'Designer + frontend dev',          initialRisk: 'Medium',  owner: 'Frontend', due: '2025-10-25' },
+  { no: 3, title: 'Persistent “Need Help Now?” footer with hotlines',           description: 'Meets WHO safety guidelines, saves lives',            mitigation: 'Dev for integration + hotline partner', initialRisk: 'Critical', owner: 'Platform', due: '2025-10-18' },
+  { no: 4, title: 'Message-tone style guide (ban words like “cure”)',           description: 'Prevents legal/reputation risks from affiliates',     mitigation: 'Content lead, 1-day workshop',    initialRisk: 'Medium',  owner: 'Content',  due: '2025-10-28' },
+  { no: 5, title: 'Advisory Board page (bios + cadence)',                       description: 'Adds legitimacy for partners & investors',            mitigation: 'Ops/admin support + basic web update', initialRisk: 'Low',     owner: 'Ops',      due: '2025-11-01' }
 ];
 
 let currentIndex = 0;
-let feedbackCache = {};              // { [riskTitle]: string }
+let feedbackCache = {};              // { [riskTitle]: HTML string (from rich editor via hidden textarea) }
 let riskStatusCache = {};            // { [riskTitle]: "implemented"|"planned"|"not_planned"|"discussion" }
 let finishedConfirmed = false;
 
@@ -51,6 +25,29 @@ function statusLabel(key) {
   return found ? found.label : "—";
 }
 
+/* ---------- Tabs + Table helpers ---------- */
+function refreshTabs() {
+  if (typeof window.renderRiskTabs === 'function') {
+    window.renderRiskTabs(risks.map(r => r.title));
+  }
+}
+
+function updateTableView() {
+  if (typeof window.renderRiskTable !== 'function') return;
+  const rows = risks.map((r, i) => ({
+    index: i,
+    title: r.title,
+    description: r.description,
+    initialRisk: r.initialRisk,
+    status: statusLabel(riskStatusCache[r.title]),
+    mitigation: r.mitigation,
+    feedbackHtml: feedbackCache[r.title] || "",
+    owner: r.owner || '—',
+    due: r.due || '—'
+  }));
+  window.renderRiskTable(rows);
+}
+
 /* ---------- Sidebar (left list) ---------- */
 function updateRiskSelector() {
   const container = document.getElementById("risk-selector");
@@ -58,8 +55,9 @@ function updateRiskSelector() {
   container.innerHTML = "";
 
   risks.forEach((risk, index) => {
-    const filled = (feedbackCache[risk.title] || "").trim().length > 0;
-    const dotColor = filled ? "green" : "red";
+    const hasFeedback = (feedbackCache[risk.title] || "").trim().length > 0;
+    const hasStatus = !!riskStatusCache[risk.title];
+    const dotColor = (hasFeedback || hasStatus) ? "green" : "red";
 
     const item = document.createElement("div");
     item.className = "risk-selector-item" + (index === currentIndex ? " active" : "");
@@ -104,13 +102,14 @@ function updateProgress() {
   }
 
   updateRiskSelector();
+  updateTableView();
 }
 
-/* ---------- Save text feedback ---------- */
+/* ---------- Save text feedback (grabs HTML from hidden textarea) ---------- */
 function saveCurrentFeedback() {
   const textarea = document.getElementById("feedback");
   if (!textarea) return;
-  feedbackCache[risks[currentIndex].title] = textarea.value.trim();
+  feedbackCache[risks[currentIndex].title] = (textarea.value || "").trim();
   updateProgress();
 }
 
@@ -132,6 +131,8 @@ function renderStatusFor(index) {
     btn.onclick = () => {
       riskStatusCache[title] = opt.key; // single-select
       renderStatusFor(index);           // refresh selection styles
+      updateTableView();                // reflect in table view immediately
+      updateRiskSelector();             // dot turns green when status chosen
     };
     container.appendChild(btn);
   });
@@ -150,15 +151,25 @@ function renderRisk(index) {
   if (d) d.textContent = risk.description;
   if (m) m.textContent = risk.mitigation;
 
-  // status buttons above the textarea
+  // set Initial Risk / Owner / Due badges (from the HTML helpers)
+  if (typeof window.setInitialRisk === 'function') window.setInitialRisk(risk.initialRisk);
+  if (typeof window.setRiskOwner === 'function') window.setRiskOwner(risk.owner || '—');
+  if (typeof window.setRiskDue === 'function') window.setRiskDue(risk.due || '—');
+
+  // status buttons above the editor
   renderStatusFor(index);
 
+  // restore feedback into the editor (hidden textarea already mirrors the editor HTML)
   if (f) f.value = feedbackCache[risk.title] || "";
 
+  // enable/disable nav
   const prev = document.getElementById("prev-btn");
   const next = document.getElementById("next-btn");
   if (prev) prev.disabled = index === 0;
   if (next) next.disabled = index === risks.length - 1;
+
+  // sync any external listeners
+  window.dispatchEvent(new CustomEvent('riskIndexChanged', { detail: { index } }));
 
   updateProgress();
 }
@@ -201,10 +212,13 @@ if (submitBtn) {
     saveCurrentFeedback();
 
     const allEntries = risks.map(risk => ({
+      risk_no: risk.no,
       risk_title: risk.title,
-      feedback_text: feedbackCache[risk.title] || "",
-      // NOTE: status is not stored in Supabase yet; add a column + include below if you want it persisted:
-      // status: riskStatusCache[risk.title] || null
+      feedback_html: feedbackCache[risk.title] || "",
+      status: riskStatusCache[risk.title] || null,
+      initial_risk: risk.initialRisk ?? null,
+      owner: risk.owner ?? null,
+      due: risk.due ?? null
     }));
 
     const response = await fetch(
@@ -224,7 +238,7 @@ if (submitBtn) {
     );
 
     if (response.ok) {
-      // swap to thank-you screen with summary (including status)
+      // swap to thank-you screen with summary (including status + initial risk)
       const main = document.querySelector("main");
       if (main) main.style.display = "none";
       const ty = document.getElementById("thank-you-screen");
@@ -234,12 +248,15 @@ if (submitBtn) {
       if (summaryDiv) {
         summaryDiv.innerHTML = risks
           .map(risk => {
-            const fb = feedbackCache[risk.title] || "—";
+            const fb = (feedbackCache[risk.title] || "—").trim() || "—";
             const st = statusLabel(riskStatusCache[risk.title]);
+            const ir = risk.initialRisk ?? '—';
+            const owner = risk.owner ?? '—';
+            const due = risk.due ?? '—';
             return `
               <div style="margin-bottom: 1.25em;">
-                <strong>${risk.title}</strong><br/>
-                <small><b>Status:</b> ${st}</small><br/>
+                <strong>${risk.no}. ${risk.title}</strong><br/>
+                <small><b>Initial Risk:</b> ${ir} &nbsp;|&nbsp; <b>Status:</b> ${st} &nbsp;|&nbsp; <b>Owner:</b> ${owner} &nbsp;|&nbsp; <b>Due:</b> ${due}</small><br/>
                 <em>${fb}</em>
               </div>`;
           })
@@ -252,25 +269,53 @@ if (submitBtn) {
   };
 }
 
-/* ---------- Mobile sidebar toggle (safe if missing) ---------- */
-const sidebarToggle = document.getElementById("toggleSidebar");
-if (sidebarToggle) {
-  sidebarToggle.addEventListener("click", () => {
-    const selector = document.getElementById("risk-selector");
-    if (selector) selector.classList.toggle("open");
-  });
-}
+/* ---------- Collapsible sidebar ---------- */
+(function setupCollapsibleSidebar() {
+  const btn = document.getElementById("toggleSidebar");
+  const STORAGE_KEY = "riskSidebarCollapsed";
 
-const sidebar = document.getElementById("risk-sidebar");
-const toggleButton = document.getElementById("toggle-sidebar");
-if (sidebar && toggleButton) {
-  toggleButton.onclick = () => {
-    sidebar.classList.toggle("closed");
-    sidebar.classList.toggle("open");
-  };
-}
+  function setCollapsed(collapsed) {
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+    if (btn) {
+      btn.setAttribute("aria-expanded", (!collapsed).toString());
+      btn.title = collapsed ? "Show list (Ctrl/Cmd + \\)" : "Hide list (Ctrl/Cmd + \\)";
+      btn.textContent = collapsed ? "☰ Show List" : "☰ Hide List";
+    }
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? "1" : "0"); } catch {}
+  }
+
+  function getInitialState() {
+    // default: expanded; respect previous preference if present
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v === "1" || v === "0") return v === "1";
+    } catch {}
+    return false;
+  }
+
+  const initialCollapsed = getInitialState();
+  setCollapsed(initialCollapsed);
+
+  if (btn) {
+    btn.addEventListener("click", () => setCollapsed(!document.body.classList.contains("sidebar-collapsed")));
+  }
+
+  // Keyboard shortcut: Cmd/Ctrl + \
+  window.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "\\") {
+      e.preventDefault();
+      setCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+    }
+  });
+})();
 
 /* ---------- Init ---------- */
+refreshTabs();       // build any tabs if you still use them
 renderRisk(currentIndex);
+
+// keep cache updated as user types (textarea mirrors rich editor HTML)
 const feedbackEl = document.getElementById("feedback");
 if (feedbackEl) feedbackEl.addEventListener("keyup", saveCurrentFeedback);
+
+// initial table render (table view uses this)
+updateTableView();
